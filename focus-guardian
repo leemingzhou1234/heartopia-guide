@@ -1,1 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>专注卫士 - 少玩手机助手</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📱 专注卫士</h1>
+        <p class="subtitle">记录你的专注时光，减少手机干扰</p>
 
+        <!-- 统计卡片 -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="focusHours">0</div>
+                <div class="stat-label">今日专注(分钟)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="distractCount">0</div>
+                <div class="stat-label">今日分心次数</div>
+            </div>
+        </div>
+
+        <!-- 计时器显示 -->
+        <div class="timer-card">
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            <div class="timer-status" id="timerStatus">⏸️ 未开始</div>
+            <div class="button-group">
+                <button id="startBtn" class="btn btn-primary">▶ 开始专注</button>
+                <button id="pauseBtn" class="btn btn-warning" disabled>⏸️ 暂停</button>
+                <button id="resetBtn" class="btn btn-danger">🔄 重置</button>
+            </div>
+        </div>
+
+        <!-- 快速记录分心 -->
+        <div class="distract-card">
+            <button id="distractBtn" class="btn-distract">⚠️ 我刚才分心了（点击记录）</button>
+        </div>
+
+        <!-- 今日历史记录 -->
+        <div class="history-card">
+            <h3>📋 今日记录</h3>
+            <ul id="historyList">
+                <li>暂无记录，开始你的第一个专注周期吧</li>
+            </ul>
+            <button id="clearHistoryBtn" class="btn-small">清空今日数据</button>
+        </div>
+
+        <div class="tip">
+            💡 小贴士：每次想玩手机时，先专注25分钟，然后休息5分钟。分心越少，成就越高！
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+// ---------- 数据模型 ----------
+let timerInterval = null;
+let isRunning = false;
+let currentSeconds = 0;       // 当前专注周期已跑秒数
+let totalFocusSeconds = 0;     // 今日总专注秒数
+let distractCount = 0;         // 今日分心次数
+let historyLogs = [];           // 存储记录 { type, content, timestamp }
+
+// DOM 元素
+const timerDisplay = document.getElementById('timerDisplay');
+const timerStatus = document.getElementById('timerStatus');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const distractBtn = document.getElementById('distractBtn');
+const focusHoursSpan = document.getElementById('focusHours');
+const distractCountSpan = document.getElementById('distractCount');
+const historyList = document.getElementById('historyList');
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+// ---------- 本地存储加载 ----------
+function loadData() {
+    const storedFocus = localStorage.getItem('focusTotalMinutes');
+    const storedDistract = localStorage.getItem('distractCount');
+    const storedLogs = localStorage.getItem('historyLogs');
+    const storedDate = localStorage.getItem('statsDate');
+    const today = new Date().toDateString();
+
+    // 如果是新的一天，重置数据
+    if (storedDate !== today) {
+        totalFocusSeconds = 0;
+        distractCount = 0;
+        historyLogs = [];
+        localStorage.setItem('statsDate', today);
+        saveStats();
+        saveLogs();
+    } else {
+        totalFocusSeconds = parseInt(storedFocus) || 0;
+        distractCount = parseInt(storedDistract) || 0;
+        if (storedLogs) {
+            historyLogs = JSON.parse(storedLogs);
+        } else {
+            historyLogs = [];
+        }
+    }
+    updateUI();
+    renderHistory();
+}
+
+function saveStats() {
+    localStorage.setItem('focusTotalMinutes', totalFocusSeconds);
+    localStorage.setItem('distractCount', distractCount);
+}
+
+function saveLogs() {
+    localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
+}
+
+// 更新统计数字
+function updateUI() {
+    const minutes = Math.floor(totalFocusSeconds / 60);
+    focusHoursSpan.innerText = minutes;
+    distractCountSpan.innerText = distractCount;
+}
+
+// 添加一条历史
+function addHistory(type, content) {
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+    historyLogs.unshift({ type, content, time: timeStr });
+    // 最多保留50条
+    if (historyLogs.length > 50) historyLogs.pop();
+    saveLogs();
+    renderHistory();
+}
+
+function renderHistory() {
+    if (historyLogs.length === 0) {
+        historyList.innerHTML = '<li>暂无记录，开始你的第一个专注周期吧</li>';
+        return;
+    }
+    let html = '';
+    for (let log of historyLogs) {
+        const emoji = log.type === 'focus' ? '🍅' : (log.type === 'distract' ? '😵' : '🔄');
+        html += `<li>${emoji} ${log.time} ${log.content}</li>`;
+    }
+    historyList.innerHTML = html;
+}
+
+// 计时器渲染
+function updateTimerDisplay() {
+    const mins = Math.floor(currentSeconds / 60);
+    const secs = currentSeconds % 60;
+    timerDisplay.innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+}
+
+// 每走一秒
+function tick() {
+    if (isRunning) {
+        currentSeconds++;
+        updateTimerDisplay();
+    }
+}
+
+// 结束本次专注：把 currentSeconds 累加到 totalFocusSeconds
+function finishCurrentFocus() {
+    if (currentSeconds > 0) {
+        totalFocusSeconds += currentSeconds;
+        const addedMinutes = Math.floor(currentSeconds / 60);
+        const remainSeconds = currentSeconds % 60;
+        let detail = `+${addedMinutes}分${remainSeconds}秒专注`;
+        if (addedMinutes === 0 && remainSeconds > 0) detail = `+${remainSeconds}秒专注`;
+        addHistory('focus', detail);
+        saveStats();
+        updateUI();
+        currentSeconds = 0;
+        updateTimerDisplay();
+    }
+}
+
+// 重置计时（中断专注，但不计入专注时长）
+function resetTimer() {
+    if (isRunning) {
+        // 如果正在计时，先停止
+        stopTimer();
+    }
+    // 如果当前有未计入的秒数，丢弃（不分心也不专注，纯中断）
+    if (currentSeconds > 0) {
+        addHistory('reset', `放弃了 ${Math.floor(currentSeconds/60)}分${currentSeconds%60}秒 未记录`);
+        currentSeconds = 0;
+        updateTimerDisplay();
+    }
+    timerStatus.innerText = '⏸️ 已重置';
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    isRunning = false;
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    isRunning = false;
+}
+
+function startTimer() {
+    if (timerInterval) stopTimer();
+    isRunning = true;
+    timerInterval = setInterval(tick, 1000);
+    timerStatus.innerText = '⚡ 专注中... 别碰手机';
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+}
+
+function pauseTimer() {
+    if (!isRunning) return;
+    stopTimer();
+    timerStatus.innerText = '⏸ 已暂停，记得回来继续';
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+}
+
+// 记录分心
+function onDistract() {
+    // 如果当前有正在进行的专注周期，先结算已专注时间，然后重置计时器（中断专注）
+    if (currentSeconds > 0) {
+        // 将currentSeconds计入总专注，表示这段专注有效
+        totalFocusSeconds += currentSeconds;
+        const addedMinutes = Math.floor(currentSeconds / 60);
+        const remainSeconds = currentSeconds % 60;
+        let detail = `+${addedMinutes}分${remainSeconds}秒专注 (分心中断前)`;
+        if (addedMinutes === 0 && remainSeconds > 0) detail = `+${remainSeconds}秒专注 (分心中断前)`;
+        addHistory('focus', detail);
+        saveStats();
+        updateUI();
+        // 清空当前计时器
+        currentSeconds = 0;
+        updateTimerDisplay();
+        // 停止计时器运行
+        if (isRunning) {
+            stopTimer();
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            timerStatus.innerText = '⏸ 已因分心停止';
+        }
+    }
+    // 增加分心次数
+    distractCount++;
+    saveStats();
+    updateUI();
+    addHistory('distract', `分心记录 (总分心${distractCount}次)`);
+    // 可选震动提醒（移动端轻微振动）
+    if (navigator.vibrate) navigator.vibrate(100);
+}
+
+// 清空今日数据 (重置)
+function clearAllData() {
+    if (confirm('⚠️ 确定清空今日所有专注时长、分心次数和历史记录吗？')) {
+        totalFocusSeconds = 0;
+        distractCount = 0;
+        historyLogs = [];
+        if (isRunning) {
+            stopTimer();
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            timerStatus.innerText = '⏸ 已重置';
+        }
+        currentSeconds = 0;
+        updateTimerDisplay();
+        saveStats();
+        saveLogs();
+        updateUI();
+        renderHistory();
+    }
+}
+
+// ---------- 事件绑定 ----------
+startBtn.addEventListener('click', startTimer);
+pauseBtn.addEventListener('click', pauseTimer);
+resetBtn.addEventListener('click', resetTimer);
+distractBtn.addEventListener('click', onDistract);
+clearHistoryBtn.addEventListener('click', clearAllData);
+
+// 页面关闭前不做额外操作，数据已经存本地
+window.addEventListener('load', () => {
+    loadData();
+    updateTimerDisplay();
+});
+// ---------- 数据模型 ----------
+let timerInterval = null;
+let isRunning = false;
+let currentSeconds = 0;       // 当前专注周期已跑秒数
+let totalFocusSeconds = 0;     // 今日总专注秒数
+let distractCount = 0;         // 今日分心次数
+let historyLogs = [];           // 存储记录 { type, content, timestamp }
+
+// DOM 元素
+const timerDisplay = document.getElementById('timerDisplay');
+const timerStatus = document.getElementById('timerStatus');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const distractBtn = document.getElementById('distractBtn');
+const focusHoursSpan = document.getElementById('focusHours');
+const distractCountSpan = document.getElementById('distractCount');
+const historyList = document.getElementById('historyList');
+const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+// ---------- 本地存储加载 ----------
+function loadData() {
+    const storedFocus = localStorage.getItem('focusTotalMinutes');
+    const storedDistract = localStorage.getItem('distractCount');
+    const storedLogs = localStorage.getItem('historyLogs');
+    const storedDate = localStorage.getItem('statsDate');
+    const today = new Date().toDateString();
+
+    // 如果是新的一天，重置数据
+    if (storedDate !== today) {
+        totalFocusSeconds = 0;
+        distractCount = 0;
+        historyLogs = [];
+        localStorage.setItem('statsDate', today);
+        saveStats();
+        saveLogs();
+    } else {
+        totalFocusSeconds = parseInt(storedFocus) || 0;
+        distractCount = parseInt(storedDistract) || 0;
+        if (storedLogs) {
+            historyLogs = JSON.parse(storedLogs);
+        } else {
+            historyLogs = [];
+        }
+    }
+    updateUI();
+    renderHistory();
+}
+
+function saveStats() {
+    localStorage.setItem('focusTotalMinutes', totalFocusSeconds);
+    localStorage.setItem('distractCount', distractCount);
+}
+
+function saveLogs() {
+    localStorage.setItem('historyLogs', JSON.stringify(historyLogs));
+}
+
+// 更新统计数字
+function updateUI() {
+    const minutes = Math.floor(totalFocusSeconds / 60);
+    focusHoursSpan.innerText = minutes;
+    distractCountSpan.innerText = distractCount;
+}
+
+// 添加一条历史
+function addHistory(type, content) {
+    const now = new Date();
+    const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+    historyLogs.unshift({ type, content, time: timeStr });
+    // 最多保留50条
+    if (historyLogs.length > 50) historyLogs.pop();
+    saveLogs();
+    renderHistory();
+}
+
+function renderHistory() {
+    if (historyLogs.length === 0) {
+        historyList.innerHTML = '<li>暂无记录，开始你的第一个专注周期吧</li>';
+        return;
+    }
+    let html = '';
+    for (let log of historyLogs) {
+        const emoji = log.type === 'focus' ? '🍅' : (log.type === 'distract' ? '😵' : '🔄');
+        html += `<li>${emoji} ${log.time} ${log.content}</li>`;
+    }
+    historyList.innerHTML = html;
+}
+
+// 计时器渲染
+function updateTimerDisplay() {
+    const mins = Math.floor(currentSeconds / 60);
+    const secs = currentSeconds % 60;
+    timerDisplay.innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+}
+
+// 每走一秒
+function tick() {
+    if (isRunning) {
+        currentSeconds++;
+        updateTimerDisplay();
+    }
+}
+
+// 结束本次专注：把 currentSeconds 累加到 totalFocusSeconds
+function finishCurrentFocus() {
+    if (currentSeconds > 0) {
+        totalFocusSeconds += currentSeconds;
+        const addedMinutes = Math.floor(currentSeconds / 60);
+        const remainSeconds = currentSeconds % 60;
+        let detail = `+${addedMinutes}分${remainSeconds}秒专注`;
+        if (addedMinutes === 0 && remainSeconds > 0) detail = `+${remainSeconds}秒专注`;
+        addHistory('focus', detail);
+        saveStats();
+        updateUI();
+        currentSeconds = 0;
+        updateTimerDisplay();
+    }
+}
+
+// 重置计时（中断专注，但不计入专注时长）
+function resetTimer() {
+    if (isRunning) {
+        // 如果正在计时，先停止
+        stopTimer();
+    }
+    // 如果当前有未计入的秒数，丢弃（不分心也不专注，纯中断）
+    if (currentSeconds > 0) {
+        addHistory('reset', `放弃了 ${Math.floor(currentSeconds/60)}分${currentSeconds%60}秒 未记录`);
+        currentSeconds = 0;
+        updateTimerDisplay();
+    }
+    timerStatus.innerText = '⏸️ 已重置';
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    isRunning = false;
+}
+
+function stopTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    isRunning = false;
+}
+
+function startTimer() {
+    if (timerInterval) stopTimer();
+    isRunning = true;
+    timerInterval = setInterval(tick, 1000);
+    timerStatus.innerText = '⚡ 专注中... 别碰手机';
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+}
+
+function pauseTimer() {
+    if (!isRunning) return;
+    stopTimer();
+    timerStatus.innerText = '⏸ 已暂停，记得回来继续';
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+}
+
+// 记录分心
+function onDistract() {
+    // 如果当前有正在进行的专注周期，先结算已专注时间，然后重置计时器（中断专注）
+    if (currentSeconds > 0) {
+        // 将currentSeconds计入总专注，表示这段专注有效
+        totalFocusSeconds += currentSeconds;
+        const addedMinutes = Math.floor(currentSeconds / 60);
+        const remainSeconds = currentSeconds % 60;
+        let detail = `+${addedMinutes}分${remainSeconds}秒专注 (分心中断前)`;
+        if (addedMinutes === 0 && remainSeconds > 0) detail = `+${remainSeconds}秒专注 (分心中断前)`;
+        addHistory('focus', detail);
+        saveStats();
+        updateUI();
+        // 清空当前计时器
+        currentSeconds = 0;
+        updateTimerDisplay();
+        // 停止计时器运行
+        if (isRunning) {
+            stopTimer();
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            timerStatus.innerText = '⏸ 已因分心停止';
+        }
+    }
+    // 增加分心次数
+    distractCount++;
+    saveStats();
+    updateUI();
+    addHistory('distract', `分心记录 (总分心${distractCount}次)`);
+    // 可选震动提醒（移动端轻微振动）
+    if (navigator.vibrate) navigator.vibrate(100);
+}
+
+// 清空今日数据 (重置)
+function clearAllData() {
+    if (confirm('⚠️ 确定清空今日所有专注时长、分心次数和历史记录吗？')) {
+        totalFocusSeconds = 0;
+        distractCount = 0;
+        historyLogs = [];
+        if (isRunning) {
+            stopTimer();
+            startBtn.disabled = false;
+            pauseBtn.disabled = true;
+            timerStatus.innerText = '⏸ 已重置';
+        }
+        currentSeconds = 0;
+        updateTimerDisplay();
+        saveStats();
+        saveLogs();
+        updateUI();
+        renderHistory();
+    }
+}
+
+// ---------- 事件绑定 ----------
+startBtn.addEventListener('click', startTimer);
+pauseBtn.addEventListener('click', pauseTimer);
+resetBtn.addEventListener('click', resetTimer);
+distractBtn.addEventListener('click', onDistract);
+clearHistoryBtn.addEventListener('click', clearAllData);
+
+// 页面关闭前不做额外操作，数据已经存本地
+window.addEventListener('load', () => {
+    loadData();
+    updateTimerDisplay();
+});
