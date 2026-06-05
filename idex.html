@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartopia 攻略站 ✿</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #f9a8d4;
+    --rose-deep: #ec4899;
+    --peach: #fcd5b0;
+    --mint: #a7f3d0;
+    --mint-deep: #34d399;
+    --sky: #bae6fd;
+    --sky-deep: #38bdf8;
+    --lavender: #ddd6fe;
+    --yellow: #fef08a;
+    --cream: #fff8f0;
+    --text: #4a3728;
+    --text-soft: #9d7b6a;
+    --white: #ffffff;
+    --card-shadow: 0 8px 32px rgba(236,72,153,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Decorative background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 10% 20%, #fce7f388 0%, transparent 40%),
+      radial-gradient(circle at 90% 10%, #bae6fd66 0%, transparent 35%),
+      radial-gradient(circle at 80% 80%, #a7f3d066 0%, transparent 40%),
+      radial-gradient(circle at 20% 85%, #ddd6fe55 0%, transparent 35%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Floating hearts */
+  .hearts-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .heart-float {
+    position: absolute;
+    font-size: 1.2rem;
+    opacity: 0.12;
+    animation: floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.12; }
+    90% { opacity: 0.12; }
+    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+  }
+
+  /* Header */
+  header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+  }
+  .site-title {
+    font-family: 'Pacifico', cursive;
+    font-size: clamp(2.2rem, 6vw, 3.8rem);
+    background: linear-gradient(135deg, var(--rose-deep), #a855f7, var(--sky-deep));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 8px rgba(236,72,153,0.25));
+    animation: fadeDown 0.8s ease both;
+  }
+  .site-subtitle {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+    color: var(--text-soft);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    animation: fadeDown 0.8s 0.15s ease both;
+    opacity: 0;
+  }
+  .header-deco {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+    font-size: 1.4rem;
+    animation: fadeDown 0.8s 0.3s ease both;
+    opacity: 0;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Nav tabs */
+  nav {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0 1rem 1.5rem;
+    animation: fadeDown 0.8s 0.4s ease both;
+    opacity: 0;
+  }
+  .nav-btn {
+    background: white;
+    border: 2.5px solid transparent;
+    border-radius: 999px;
+    padding: 0.45rem 1.2rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.07);
+  }
+  .nav-btn:hover, .nav-btn.active {
+    background: linear-gradient(135deg, var(--rose), #c084fc);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(236,72,153,0.3);
+  }
+
+  /* Main content */
+  main {
+    position: relative;
+    z-index: 10;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1rem 4rem;
+  }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+  .section-icon {
+    width: 42px; height: 42px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--text);
+  }
+  .section-title span {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-soft);
+    margin-left: 0.5rem;
+  }
+
+  /* Quest cards grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .quest-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.4rem;
+    box-shadow: var(--card-shadow);
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.34,1.56,.64,1);
+    border: 2px solid transparent;
+    animation: fadeUp 0.5s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+  .quest-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    border-radius: 20px 20px 0 0;
+  }
+  .quest-card.rose::before { background: linear-gradient(90deg, var(--rose), var(--rose-deep)); }
+  .quest-card.mint::before { background: linear-gradient(90deg, var(--mint), var(--mint-deep)); }
+  .quest-card.sky::before { background: linear-gradient(90deg, var(--sky), var(--sky-deep)); }
+  .quest-card.lavender::before { background: linear-gradient(90deg, var(--lavender), #a855f7); }
+  .quest-card.yellow::before { background: linear-gradient(90deg, var(--yellow), #f59e0b); }
+
+  .quest-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 48px rgba(236,72,153,0.18);
+    border-color: var(--rose);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-emoji { font-size: 2rem; margin-bottom: 0.7rem; }
+  .card-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    margin-bottom: 0.5rem;
+  }
+  .tag-rose { background: #fce7f3; color: #be185d; }
+  .tag-mint { background: #d1fae5; color: #065f46; }
+  .tag-sky { background: #e0f2fe; color: #0369a1; }
+  .tag-lavender { background: #ede9fe; color: #6d28d9; }
+  .tag-yellow { background: #fef9c3; color: #854d0e; }
+
+  .card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+    line-height: 1.3;
+  }
+  .card-desc {
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    line-height: 1.5;
+  }
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1.5px dashed #f3e8ff;
+  }
+  .card-diff {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-soft);
+  }
+  .stars { color: #f59e0b; font-size: 0.8rem; letter-spacing: -1px; }
+  .card-arrow {
+    margin-left: auto;
+    font-size: 0.9rem;
+    color: var(--rose-deep);
+    transition: transform 0.2s;
+  }
+  .quest-card:hover .card-arrow { transform: translateX(4px); }
+
+  /* Tip box */
+  .tip-box {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem 1.6rem;
+    margin-bottom: 2.5rem;
+    box-shadow: var(--card-shadow);
+    border-left: 5px solid var(--mint-deep);
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    animation: fadeUp 0.5s 0.3s ease both;
+    opacity: 0;
+  }
+  .tip-icon { font-size: 1.8rem; flex-shrink: 0; }
+  .tip-title { font-weight: 800; font-size: 1rem; color: #065f46; margin-bottom: 0.3rem; }
+  .tip-text { font-size: 0.88rem; color: var(--text-soft); line-height: 1.6; }
+
+  /* Detail panel */
+  .detail-panel {
+    display: none;
+    background: white;
+    border-radius: 24px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 12px 48px rgba(236,72,153,0.15);
+    animation: fadeUp 0.3s ease both;
+    border: 2px solid #fce7f3;
+  }
+  .detail-panel.open { display: block; }
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .detail-emoji { font-size: 2.5rem; }
+  .detail-title { font-size: 1.4rem; font-weight: 900; }
+  .detail-close {
+    margin-left: auto;
+    background: #fce7f3;
+    border: none;
+    border-radius: 999px;
+    width: 36px; height: 36px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--rose-deep);
+    font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .detail-close:hover { background: var(--rose-deep); color: white; }
+
+  .steps-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  .steps-list li {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    background: var(--cream);
+    border-radius: 14px;
+    padding: 0.9rem 1rem;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose), #c084fc);
+    color: white;
+    font-weight: 900;
+    font-size: 0.85rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-text { font-size: 0.9rem; line-height: 1.55; color: var(--text); padding-top: 0.2rem; }
+
+  .reward-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.2rem;
+    padding-top: 1.2rem;
+    border-top: 2px dashed #fce7f3;
+  }
+  .reward-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: #fef9c3;
+    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #854d0e;
+  }
+
+  /* Footer */
+  footer {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-soft);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .cards-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating hearts background -->
+<div class="hearts-bg" id="heartsBg"></div>
+
+<!-- Header -->
+<header>
+  <div class="site-title">Heartopia 攻略站</div>
+  <div class="site-subtitle">✿ 你的温馨生活模拟游戏攻略指南 ✿</div>
+  <div class="header-deco">🌸 🏡 🎣 🌿 🐾 🍳</div>
+</header>
+
+<!-- Nav -->
+<nav>
+  <button class="nav-btn active" onclick="filterCards('all', this)">全部</button>
+  <button class="nav-btn" onclick="filterCards('main', this)">🌟 主线任务</button>
+  <button class="nav-btn" onclick="filterCards('hobby', this)">🎣 爱好系统</button>
+  <button class="nav-btn" onclick="filterCards('build', this)">🏠 家园建造</button>
+  <button class="nav-btn" onclick="filterCards('social', this)">💬 社交互动</button>
+  <button class="nav-btn" onclick="filterCards('daily', this)">📅 每日任务</button>
+</nav>
+
+<!-- Main -->
+<main>
+
+  <!-- Detail Panel (hidden by default) -->
+  <div class="detail-panel" id="detailPanel">
+    <div class="detail-header">
+      <div class="detail-emoji" id="detailEmoji"></div>
+      <div>
+        <div class="detail-title" id="detailTitle"></div>
+        <div class="card-desc" id="detailDesc"></div>
+      </div>
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+    </div>
+    <ul class="steps-list" id="detailSteps"></ul>
+    <div class="reward-row" id="detailRewards"></div>
+  </div>
+
+  <!-- Tip box -->
+  <div class="tip-box">
+    <div class="tip-icon">💡</div>
+    <div>
+      <div class="tip-title">新手小提示</div>
+      <div class="tip-text">Heartopia 是一款休闲生活模拟游戏，不需要赶进度！每天完成日常任务可以积累货币，先以解锁钓鱼和烹饪为目标，这两个系统奖励最丰厚 🎣🍳</div>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="section-header">
+    <div class="section-icon" style="background:#fce7f3;">🌟</div>
+    <div class="section-title">攻略列表 <span id="cardCount"></span></div>
+  </div>
+
+  <div class="cards-grid" id="cardsGrid">
+    <!-- Cards injected by JS -->
+  </div>
+
+</main>
+
+<footer>
+  🌸 Heartopia 攻略站 · 非官方粉丝站 · 内容持续更新中
+</footer>
+
+<script>
+const quests = [
+  {
+    id: 1,
+    emoji: '⭐',
+    tag: '主线任务', tagClass: 'tag-rose', color: 'rose', category: 'main',
+    title: '欢迎来到小镇！',
+    desc: '游戏开始的新手引导任务，带你认识小镇居民。',
+    diff: 2,
+    steps: [
+      '创建你的角色，选择外貌和名字',
+      '跟随星星的引导进入 Heartopia 小镇',
+      '和镇长 Nova 对话，了解小镇背景',
+      '领取你的第一栋小屋，进行简单装饰',
+      '完成引导后，获得初始货币和工具'
+    ],
+    rewards: ['💰 金币 ×200', '🔨 基础工具箱', '🌱 新手种子礼包']
+  },
+  {
+    id: 2,
+    emoji: '🎣',
+    tag: '爱好系统', tagClass: 'tag-sky', color: 'sky', category: 'hobby',
+    title: '初学钓鱼：钓到第一条鱼',
+    desc: '解锁钓鱼爱好，前往小镇码头开始你的垂钓之旅。',
+    diff: 1,
+    steps: [
+      '先去找 NPC 渔夫 Kai 对话，领取钓鱼任务',
+      '前往小镇东边的码头区域',
+      '装备钓竿，注意工具耐久度，记得带修复工具',
+      '看到水花时按提示键收竿，注意时机！',
+      '钓到任意一条鱼后交给 Kai 完成任务'
+    ],
+    rewards: ['🎣 进阶钓竿', '💰 金币 ×150', '🐟 钓鱼图鉴解锁']
+  },
+  {
+    id: 3,
+    emoji: '🌷',
+    tag: '家园建造', tagClass: 'tag-lavender', color: 'lavender', category: 'build',
+    title: '打造梦想小屋：基础装修',
+    desc: '了解家园建造系统，学会如何自定义你的小屋。',
+    diff: 1,
+    steps: [
+      '进入你的小屋，打开建造模式（按 B 键）',
+      '尝试放置一件家具，感受网格对齐系统',
+      '使用壁纸和地板功能更换室内风格',
+      '前往商店购买 3 件以上家具完成收集目标',
+      '邀请好友参观你的小屋，获得社交奖励'
+    ],
+    rewards: ['🛋️ 限定家具盒 ×1', '🌟 装饰达人称号', '💰 金币 ×100']
+  },
+  {
+    id: 4,
+    emoji: '🍳',
+    tag: '爱好系统', tagClass: 'tag-sky', color: 'sky', category: 'hobby',
+    title: '学习烹饪：做出第一道料理',
+    desc: '解锁烹饪系统，在厨房里制作美食。',
+    diff: 2,
+    steps: [
+      '向 NPC 厨师 Lily 学习基础食谱',
+      '去杂货店购买面粉、鸡蛋、牛奶等食材',
+      '回到家中，放置厨房用具（需先购买）',
+      '按照食谱步骤操作，注意火候时机',
+      '完成后可以赠送给 NPC 提升好感度'
+    ],
+    rewards: ['🍰 精美食谱书', '💰 金币 ×180', '👨‍🍳 烹饪爱好 LV.2 解锁']
+  },
+  {
+    id: 5,
+    emoji: '🌿',
+    tag: '爱好系统', tagClass: 'tag-mint', color: 'mint', category: 'hobby',
+    title: '园艺入门：种下第一株植物',
+    desc: '开始你的花园之旅，种植各种美丽的花卉和蔬菜。',
+    diff: 1,
+    steps: [
+      '找到 NPC 园丁 Flora，领取园艺任务',
+      '用基础锄头在花园区域开垦土地',
+      '购买或使用新手种子礼包中的种子',
+      '每天给植物浇水（能量消耗注意控制）',
+      '等待 3 天后收获作物，完成任务'
+    ],
+    rewards: ['🌻 稀有花卉种子', '💰 金币 ×120', '🌿 园艺爱好解锁']
+  },
+  {
+    id: 6,
+    emoji: '💬',
+    tag: '社交互动', tagClass: 'tag-yellow', color: 'yellow', category: 'social',
+    title: '结交第一位好友',
+    desc: '与其他玩家互动，建立友谊获取专属奖励。',
+    diff: 1,
+    steps: [
+      '前往小镇广场，这是玩家聚集的核心区域',
+      '向任意玩家发送好友申请',
+      '互相参观对方的小屋（各获得奖励）',
+      '一起完成一个联机活动或迷你游戏',
+      '在对方留言板留言，完成互动任务'
+    ],
+    rewards: ['💝 好友纪念徽章', '💰 金币 ×80', '🎁 社交礼盒 ×1']
+  },
+  {
+    id: 7,
+    emoji: '📅',
+    tag: '每日任务', tagClass: 'tag-rose', color: 'rose', category: 'daily',
+    title: '每日任务清单速通指南',
+    desc: '最高效完成每日任务的顺序与技巧。',
+    diff: 1,
+    steps: [
+      '登录后先领取签到奖励（左上角日历图标）',
+      '优先完成「对话 3 位 NPC」任务，沿主街道走一圈即可',
+      '在花园浇一次水，消耗少但计入任务',
+      '钓一条鱼或采集一次（能量充足时）',
+      '最后在商店购买任意 1 件物品完成消费任务'
+    ],
+    rewards: ['💰 每日金币 ×50~150', '🌟 经验值积累', '📦 随机道具箱']
+  },
+  {
+    id: 8,
+    emoji: '🐾',
+    tag: '社交互动', tagClass: 'tag-yellow', color: 'yellow', category: 'social',
+    title: '领养第一只宠物',
+    desc: '在 Heartopia 收养专属宠物猫猫或狗狗。',
+    diff: 2,
+    steps: [
+      '达到账号等级 5 级解锁宠物系统',
+      '前往小镇宠物店，与 NPC 店主对话',
+      '选择你喜欢的猫或狗（可自定义颜色）',
+      '为宠物取名并完成领养流程',
+      '每天与宠物互动可提升亲密度获取奖励'
+    ],
+    rewards: ['🐱 宠物专属称号', '💰 金币 ×200', '🎀 宠物配件礼包']
+  },
+  {
+    id: 9,
+    emoji: '🔭',
+    tag: '主线任务', tagClass: 'tag-rose', color: 'rose', category: 'main',
+    title: '星之使命：探索小镇秘密',
+    desc: '深入了解 Heartopia 世界观的主线故事任务。',
+    diff: 3,
+    steps: [
+      '完成新手引导后与镇长 Nova 再次对话',
+      '前往小镇北部的星象台，与占星师 Celeste 交谈',
+      '收集散落在各区域的 5 颗星之碎片',
+      '返回星象台激活星之仪式',
+      '观看剧情动画，解锁新地图区域'
+    ],
+    rewards: ['✨ 限定称号「星之使者」', '💰 金币 ×500', '🗺️ 新区域解锁']
+  }
+];
+
+// Generate floating hearts
+const heartsBg = document.getElementById('heartsBg');
+const heartEmojis = ['💗', '💕', '✿', '🌸', '⭐', '💖'];
+for (let i = 0; i < 18; i++) {
+  const h = document.createElement('div');
+  h.className = 'heart-float';
+  h.textContent = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+  h.style.left = Math.random() * 100 + '%';
+  h.style.animationDuration = (12 + Math.random() * 16) + 's';
+  h.style.animationDelay = (Math.random() * 15) + 's';
+  h.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+  heartsBg.appendChild(h);
+}
+
+let currentFilter = 'all';
+let currentDetail = null;
+
+function renderCards(filter) {
+  const grid = document.getElementById('cardsGrid');
+  const filtered = filter === 'all' ? quests : quests.filter(q => q.category === filter);
+  document.getElementById('cardCount').textContent = filtered.length + ' 篇攻略';
+  grid.innerHTML = '';
+  filtered.forEach((q, i) => {
+    const stars = '★'.repeat(q.diff) + '☆'.repeat(3 - q.diff);
+    const diffLabel = ['', '简单', '普通', '稍难'][q.diff];
+    const card = document.createElement('div');
+    card.className = `quest-card ${q.color}`;
+    card.style.animationDelay = (i * 0.07) + 's';
+    card.innerHTML = `
+      <div class="card-emoji">${q.emoji}</div>
+      <div class="card-tag ${q.tagClass}">${q.tag}</div>
+      <div class="card-title">${q.title}</div>
+      <div class="card-desc">${q.desc}</div>
+      <div class="card-meta">
+        <span class="card-diff">${diffLabel}</span>
+        <span class="stars">${stars}</span>
+        <span class="card-arrow">→</span>
+      </div>
+    `;
+    card.onclick = () => openDetail(q);
+    grid.appendChild(card);
+  });
+}
+
+function filterCards(category, btn) {
+  currentFilter = category;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  closeDetail();
+  renderCards(category);
+}
+
+function openDetail(quest) {
+  currentDetail = quest;
+  document.getElementById('detailEmoji').textContent = quest.emoji;
+  document.getElementById('detailTitle').textContent = quest.title;
+  document.getElementById('detailDesc').textContent = quest.desc;
+
+  const stepsList = document.getElementById('detailSteps');
+  stepsList.innerHTML = quest.steps.map((s, i) =>
+    `<li><div class="step-num">${i+1}</div><div class="step-text">${s}</div></li>`
+  ).join('');
+
+  const rewardRow = document.getElementById('detailRewards');
+  rewardRow.innerHTML = '<strong style="font-size:.85rem;color:var(--text-soft);width:100%;display:block;margin-bottom:.4rem;">🎁 任务奖励</strong>'
+    + quest.rewards.map(r => `<span class="reward-chip">${r}</span>`).join('');
+
+  const panel = document.getElementById('detailPanel');
+  panel.classList.add('open');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+  currentDetail = null;
+}
+
+// Init
+renderCards('all');
+</script>
+</body>
+</html>
