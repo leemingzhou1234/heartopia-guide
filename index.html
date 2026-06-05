@@ -602,7 +602,8 @@ const quests = [
 
 // Generate floating hearts
 const heartsBg = document.getElementById('heartsBg');
-const heartEmojis = ['💗', '💕', '✿', '🌸', '⭐', '💖'];
+const heartEmojis = ['❤️', '🧡', '💛', '💚', '💙', '💜', '🩷', '🩵', '💗', '💖'];
+
 for (let i = 0; i < 18; i++) {
   const h = document.createElement('div');
   h.className = 'heart-float';
@@ -610,7 +611,8 @@ for (let i = 0; i < 18; i++) {
   h.style.left = Math.random() * 100 + '%';
   h.style.animationDuration = (12 + Math.random() * 16) + 's';
   h.style.animationDelay = (Math.random() * 15) + 's';
-  h.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+  h.style.fontSize = (0.8 + Math.random() * 3.5) + 'rem';
+
   heartsBg.appendChild(h);
 }
 
